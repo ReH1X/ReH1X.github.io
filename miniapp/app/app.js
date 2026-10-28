@@ -4,6 +4,7 @@
   const app = document.querySelector('#app');
   const nav = document.querySelector('#nav');
   const toastNode = document.querySelector('#toast');
+  const connection = document.querySelector('#connection-status');
   const tg = window.Telegram?.WebApp;
   const demo = new URLSearchParams(location.search).has('demo');
   // The public frontend may live on Pages while the API remains on the bot's device.
@@ -24,13 +25,22 @@
   function fmt(iso) {if(!iso)return '—';const date=new Date(iso);return Number.isNaN(date.getTime())?'—':new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).format(date);}
   function notify(message) {toastNode.textContent=message;toastNode.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastNode.classList.remove('show'),2800);}
   function buzz() {try {tg?.HapticFeedback?.impactOccurred('light');} catch (_) {}}
-  function gate(title, text) {nav.hidden=true;app.innerHTML=`<div class="gate"><div class="sigil">◈</div><h1>${esc(title)}</h1><p>${esc(text)}</p></div>`;}
+  function setConnection(label, offline=false) {connection.querySelector('span').textContent=label;connection.classList.toggle('offline',offline);}
+  function gate(title, text, offline=false) {nav.hidden=true;setConnection(offline?'НЕТ СВЯЗИ':'ТОЛЬКО ДЛЯ СВОИХ',offline);app.innerHTML=`<div class="gate"><img src="./art/biobot.svg" alt="" class="gate-sticker"><h1>${esc(title)}</h1><p>${esc(text)}</p></div>`;}
+  function celebrate(message, sticker='./art/harvest.svg') {
+    document.querySelector('.reward-pop')?.remove();
+    const pop=document.createElement('div');pop.className='reward-pop';pop.setAttribute('aria-hidden','true');
+    pop.innerHTML=`<img src="${sticker}" alt=""><strong>${esc(message)}</strong>`;
+    document.querySelector('.shell').append(pop);
+    setTimeout(()=>pop.remove(),1600);
+    try{tg?.HapticFeedback?.notificationOccurred('success');}catch(_){}
+  }
   function mock(current) {
     const now=Date.now();
     return {page:current,user:{name:'Игрок SKVERNA'},snapshot:{member:true,quest:{title:'Задание клана',level:2,status:'active',deadline:new Date(now+24*3600000).toISOString(),proof_status:null},mode_counts:{classic:2,tdm:3,wow4:5,wow3:1},own_mode:null,own_expires_at:null,subscribed_modes:['wow4'],events:[{id:1,title:'WOW 4×4 · Вечерний сбор',starts_at:new Date(now+6*3600000).toISOString(),registration_closes_at:new Date(now+5*3600000).toISOString(),yes_count:5,maybe_count:2,own_rsvp:null}],season_rank:7,season_points:340,season_wins:4,farm_sc:2480,pubg_status:'verified'},roster:{classic:['Игрок 1','Игрок 2'],tdm:['Игрок 1','Игрок 2','Игрок 3'],wow4:['Игрок 1','Игрок 2','Игрок 3','Игрок 4','Игрок 5'],wow3:['Игрок 1']}};
   }
   function mockFarm(view) {
-    return {view,text:'☣ BIOFARM\n\nТвоя ферма готова к сбору. Развивай уровень, нанимай персонал и исследуй новые культуры.\n\nЭто демонстрация интерфейса: данные не сохраняются.',level:12,stars:1,sc:2480,buttons:[
+    return {view,text:'☣ BIOFARM\n\nТвоя ферма готова к сбору. Развивай уровень, нанимай персонал и исследуй новые культуры.\n\nЭто демонстрация интерфейса: данные не сохраняются.',level:12,stars:1,sc:2480,visual:{stage:3,total_stage:13,stage_name:'Зелёный сектор',crop:'🌱 Культура',ready:3,capacity:5,next_ready_at:null},buttons:[
       {text:'🌾 СОБРАТЬ',action:'farm:collect',kind:'action'},
       {text:'🌿 Моя ферма',action:'farm:menu:myfarm',kind:'view'},
       {text:'🏗 Развитие',action:'farm:menu:progress',kind:'view'},
@@ -51,14 +61,15 @@
     page=next;
     const seq=++requestSeq;
     nav.querySelectorAll('[data-tab]').forEach(button=>{button.classList.toggle('active',button.dataset.tab===page);button.setAttribute('aria-current',button.dataset.tab===page?'page':'false');});
-    if(demo){data=page==='farm'?mockFarm(farmView):page==='clan'?mockWeek():mock(page);render();return;}
+    if(demo){data=page==='farm'?mockFarm(farmView):page==='clan'?mockWeek():mock(page);setConnection('ДЕМО');render();return;}
     try {
       const path=next==='farm'?`api/farm?view=${encodeURIComponent(farmView)}`:next==='clan'?`api/weekly?previous=${previousWeek}`:`api/state?page=${next}`;
       const loaded=await api(path);
       if(seq!==requestSeq)return;
       data=loaded;
+      setConnection('В СЕТИ');
       render();
-    } catch(error){if(seq===requestSeq)gate('Нет соединения',error.message);}
+    } catch(error){if(seq===requestSeq)gate('Нет соединения',error.message,true);}
   }
   function title(eyebrow,main,accent,subtitle) {return `<div class="eyebrow">${eyebrow}</div><h1 class="heading">${main} <span>${accent}</span></h1><p class="subheading">${subtitle}</p>`;}
   function section(name,side='') {return `<div class="section-title"><h2>${name}</h2><small>${side}</small></div>`;}
@@ -67,8 +78,8 @@
     const total=Object.values(s.mode_counts||{}).reduce((a,b)=>a+b,0);
     const event=s.events?.[0];
     const next=s.quest?.status==='active'&&s.quest?.proof_status!=='pending'?'Запиши результат задания и отправь доказательство боту.':s.own_mode?'Ты в поиске команды. Следи за составом в разделе «Игра».':total?'Игроки уже собираются. Выбери режим и займи место.':'Начни сбор на ближайший матч.';
-    return `${title('ЛИЧНЫЙ ХАБ · OS 3.8.2','Привет,',esc(data.user.name)+'!','Здесь всё, что происходит в твоём клане прямо сейчас.')}
-      <div class="hero"><span class="tag">✦ ROXY / ТВОЙ ХОД</span><h2>${esc(next)}</h2><p>Твоя команда всегда в одном касании.</p><button class="primary" data-tab="play">Найти игру <span aria-hidden="true">↗</span></button><img src="../media/skverna-crest-3d.webp" alt="Эмблема SKVERNA"></div>
+    return `${title('ЛИЧНЫЙ ХАБ · SKVERNA OS','Привет,',esc(data.user.name)+'!','Здесь всё, что происходит в твоём клане прямо сейчас.')}
+      <div class="hero"><span class="tag">✦ БИОБОТ / ТВОЙ ХОД</span><h2>${esc(next)}</h2><p>Твоя команда всегда в одном касании.</p><button class="primary" data-tab="play">Найти игру <span aria-hidden="true">↗</span></button><img src="./art/biobot.svg" alt="Биобот приветствует участников SKVERNA"></div>
       ${section('На радаре','СЕГОДНЯ')}<div class="grid-2"><div class="metric"><div class="icon">⌁</div><b>${total}</b><small>ищут команду</small></div><div class="metric"><div class="icon">◈</div><b>${s.season_rank?'#'+s.season_rank:'—'}</b><small>место в сезоне</small></div></div>
       ${section('Твоё задание','01 / КВЕСТ')}${questCard(s.quest)}
       ${section('Ближайшая игра','02 / СОБЫТИЯ')}${event?`<div class="card"><div class="card-head"><strong>${esc(event.title)}</strong><span class="stamp">${event.yes_count} ИГРОКОВ</span></div><p>📅 ${fmt(event.starts_at)} · ${event.own_rsvp==='yes'?'ты записан':'запись открыта'}</p><div class="actions"><button class="secondary" data-tab="events">К событию ↗</button></div></div>`:'<div class="empty">Ближайших событий пока нет. Можно собрать команду самому.</div>'}`;
@@ -87,11 +98,27 @@
     ${section('Твои системы','SKVERNA OS')}<div class="grid-2"><div class="metric"><div class="icon">☣</div><b>${s.farm_sc===null?'—':Number(s.farm_sc).toLocaleString('ru-RU')}</b><small>монет BIOFARM</small></div><div class="metric"><div class="icon">🎮</div><b style="font-size:15px;margin-top:16px;letter-spacing:0">PUBG</b><small>${esc(pubg)}</small></div></div>
     ${section('Задание','ПРОГРЕСС')}${questCard(s.quest)}<div class="card"><div class="card-head"><strong>Твои следующие шаги</strong><span class="stamp">В ПРИЛОЖЕНИИ</span></div><p>Открой BIOFARM, получи награды недели и собери команду для игры.</p><div class="actions"><button class="secondary" data-tab="farm">В ферму</button><button class="secondary" data-tab="clan">Цели клана</button></div></div>`;}
   function farm(screen) {
+    const visual=screen.visual||{};
+    const level=Math.max(1,Number(screen.level)||1);
+    const stage=Math.max(1,Math.min(10,Math.floor(Number(visual.stage)||Math.min(10,Math.ceil(level/5)))));
+    const ready=Math.max(0,Math.floor(Number(visual.ready)||0));
+    const capacity=Math.max(1,Math.floor(Number(visual.capacity)||2));
+    const fill=Math.max(0,Math.min(100,Math.round(ready/capacity*100)));
+    const isHome=screen.view==='farm:home';
+    const crop=visual.crop||'Твоя культура';
+    const stageName=visual.stage_name||`Сектор ${stage}`;
+    const next=visual.next_ready_at?`Следующий сбор: ${fmt(visual.next_ready_at)}`:'Урожай растёт на твоей ферме';
     const buttons=(screen.buttons||[]).map(button=>`<button type="button" class="${button.action==='farm:collect'?'primary':'secondary'}" data-farm-${button.kind==='view'?'view':'action'}="${esc(button.action)}">${esc(button.text)}</button>`).join('');
-    return `${title('ТВОЯ BIOFARM','Расти и','собирай.','Твой урожай, развитие и покупки синхронизируются с ботом.')}
-      <div class="grid-2 farm-stats"><div class="metric"><span class="farm-label">Уровень</span><b>${esc(screen.level)}</b><small>✦ ${esc(screen.stars)} звёзд</small></div><div class="metric"><span class="farm-label">Баланс</span><b>${Number(screen.sc).toLocaleString('ru-RU')}</b><small>SC на ферме</small></div></div>
-      <div class="card farm-hero"><div class="farm-copy">${esc(screen.text)}</div></div>
-      <div class="farm-actions">${buttons}</div>`;
+    const lines=String(screen.text||'').split(/\n+/).map(value=>value.trim()).filter(Boolean);
+    const report=lines.map((value,index)=>`<p class="farm-line ${index===0?'farm-line-title':''}">${esc(value)}</p>`).join('');
+    return `<div class="farm-intro"><div class="eyebrow">BIOFARM · ТВОЙ СЕКТОР</div><h1 class="heading">Ферма <span>жива.</span></h1><p class="subheading">Расти, собирай урожай и открывай новые стадии.</p></div>
+      <div class="farm-scene" style="--stage-shift:${(stage-1)*17}deg"><img class="farm-scene-art" src="./art/farm-sector.svg" alt="Иллюстрация биофермы" loading="eager"><div class="farm-scene-shade"></div>
+        <div class="farm-scene-top"><span class="farm-scene-tag">✦ СТАДИЯ ${esc(visual.total_stage||stage)}</span><span class="farm-scene-level">УРОВЕНЬ ${esc(level)}</span></div>
+        <div class="farm-scene-bottom"><span>ТВОЙ БИОСЕКТОР</span><strong>${esc(stageName)}</strong></div></div>
+      <div class="farm-dashboard"><div class="farm-stat"><small>БАЛАНС</small><strong>${Number(screen.sc||0).toLocaleString('ru-RU')}</strong><span>SC · монеты</span></div><div class="farm-stat"><small>ПЕРЕРОЖДЕНИЯ</small><strong>✦ ${esc(screen.stars||0)}</strong><span>постоянный буст</span></div></div>
+      <div class="farm-storage"><div class="farm-storage-head"><div><small>🌿 ${esc(crop)}</small><strong>${ready?`Готово ${ready} из ${capacity}`:'Урожай растёт'}</strong></div><img src="./art/harvest.svg" alt="" loading="lazy"></div><div class="farm-storage-track"><i style="width:${fill}%"></i></div><p>${esc(next)}</p></div>
+      ${isHome?`<div class="farm-actions">${buttons}</div><details class="farm-report"><summary>Подробности фермы <span>⌄</span></summary><div class="farm-report-body">${report}</div></details>`:
+      `<div class="farm-report farm-report-open"><div class="farm-report-body">${report}</div></div><div class="farm-actions">${buttons}</div>`}`;
   }
   function clan(week) {
     const stages=(week.stages||[]).map(item=>{
@@ -113,6 +140,7 @@
   function render() {
     if(page==='farm'||page==='clan'){
       nav.hidden=false;
+      app.classList.remove('screen-enter');void app.offsetWidth;app.classList.add('screen-enter');
       app.innerHTML=(demo?'<span class="demo-badge">ДЕМО · без записи данных</span>':'')+(page==='farm'?farm(data):clan(data))+`<div style="text-align:center;padding:12px 0"><button class="refresh" data-action="refresh">↻ Обновить данные</button></div>`;
       return;
     }
@@ -120,6 +148,7 @@
     if(!s?.member){gate('Вход для участников','Живые составы, события и прогресс открываются после вступления в основной чат SKVERNA. Напиши администрации клана.');return;}
     nav.hidden=false;
     const content={today,play,events,progress}[page](s);
+    app.classList.remove('screen-enter');void app.offsetWidth;app.classList.add('screen-enter');
     app.innerHTML=(demo?'<span class="demo-badge">ДЕМО · без записи данных</span>':'')+content+`<div style="text-align:center;padding:12px 0"><button class="refresh" data-action="refresh">↻ Обновить данные</button></div>`;
   }
   async function action(button) {
@@ -149,6 +178,7 @@
       farmView=result.view;
       await load('farm');
       notify(result.message);
+      if(result.ok&&value==='farm:collect')celebrate('УРОЖАЙ СОБРАН');
     }catch(error){notify(error.message);button.disabled=false;}
     finally{busy=false;}
   }
@@ -160,12 +190,13 @@
       const result=await api('api/weekly/claim',{week_key:data.week_key,stage:Number(button.dataset.weeklyClaim)});
       await load('clan');
       notify(result.message);
+      if(result.ok)celebrate('НАГРАДА ТВОЯ','./art/quest.svg');
     }catch(error){notify(error.message);button.disabled=false;}
     finally{busy=false;}
   }
   document.addEventListener('click',event=>{
     const tab=event.target.closest('[data-tab]');
-    if(tab){load(tab.dataset.tab);return;}
+    if(tab){if(tab.dataset.tab!==page){buzz();window.scrollTo({top:0,behavior:'smooth'});}load(tab.dataset.tab);return;}
     const view=event.target.closest('[data-farm-view]');
     if(view){farmView=view.dataset.farmView;load('farm');return;}
     const farmButton=event.target.closest('[data-farm-action]');

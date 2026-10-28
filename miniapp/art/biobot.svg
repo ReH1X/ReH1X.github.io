@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Улыбающийся Биобот">
+  <defs><linearGradient id="body" x2="0" y2="1"><stop stop-color="#efffd2"/><stop offset=".55" stop-color="#b4e98a"/><stop offset="1" stop-color="#5aaf74"/></linearGradient><linearGradient id="visor" x2="0" y2="1"><stop stop-color="#183a39"/><stop offset="1" stop-color="#091e27"/></linearGradient><filter id="shadow"><feGaussianBlur stdDeviation="11"/></filter></defs>
+  <ellipse cx="161" cy="287" rx="104" ry="16" fill="#000" opacity=".35" filter="url(#shadow)"/>
+  <path d="M157 68V43" stroke="#324f39" stroke-width="10" stroke-linecap="round"/><path d="M157 44Q129 2 94 18Q100 62 157 48Z" fill="#a7f06b" stroke="#344e3b" stroke-width="7"/><path d="M159 47Q184 0 222 20Q215 70 159 49Z" fill="#80dd8f" stroke="#344e3b" stroke-width="7"/>
+  <path d="M69 177Q43 163 34 188Q35 209 67 213M252 181Q279 161 291 180Q301 198 266 216" fill="none" stroke="#587d62" stroke-width="20" stroke-linecap="round"/><circle cx="33" cy="193" r="15" fill="#c2f397" stroke="#4f7359" stroke-width="5"/><circle cx="288" cy="193" r="15" fill="#c2f397" stroke="#4f7359" stroke-width="5"/>
+  <rect x="57" y="75" width="206" height="207" rx="86" fill="url(#body)" stroke="#36553f" stroke-width="9"/>
+  <path d="M84 182Q163 208 237 181V238Q158 273 84 237Z" fill="#7cc685" opacity=".72"/><path d="M119 277v19M201 277v19" stroke="#425e47" stroke-width="17" stroke-linecap="round"/><path d="M94 295h48M180 295h49" stroke="#425e47" stroke-width="11" stroke-linecap="round"/>
+  <rect x="79" y="106" width="162" height="98" rx="43" fill="url(#visor)" stroke="#56796e" stroke-width="6"/><ellipse cx="114" cy="136" rx="13" ry="22" fill="#fff" opacity=".12"/>
+  <ellipse cx="124" cy="150" rx="12" ry="19" fill="#d7ff9b"/><ellipse cx="196" cy="150" rx="12" ry="19" fill="#d7ff9b"/><circle cx="128" cy="145" r="4" fill="#fff"/><circle cx="200" cy="145" r="4" fill="#fff"/><path d="M146 175q14 17 29 0" fill="none" stroke="#b1ecad" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="94" cy="214" r="10" fill="#f48e8c" opacity=".75"/><circle cx="226" cy="214" r="10" fill="#f48e8c" opacity=".75"/><circle cx="160" cy="226" r="15" fill="#d7ff9b"/><path d="m160 217 4 8-4 8-4-8Z" fill="#3b8654"/>
+</svg>
