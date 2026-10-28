@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Биобот с урожаем">
+  <defs><linearGradient id="body" x2="0" y2="1"><stop stop-color="#efffd2"/><stop offset="1" stop-color="#70bf7d"/></linearGradient><linearGradient id="basket" x2="0" y2="1"><stop stop-color="#e6c77c"/><stop offset="1" stop-color="#9d6c45"/></linearGradient></defs>
+  <path d="M160 78V48" stroke="#35583e" stroke-width="9" stroke-linecap="round"/><path d="M157 51Q121 20 102 38Q109 69 157 56Z" fill="#b6f47c" stroke="#4e7147" stroke-width="6"/><path d="M160 54Q180 19 217 34Q207 71 160 57Z" fill="#84dd88" stroke="#4e7147" stroke-width="6"/>
+  <path d="M77 174 49 201M243 174l30 27" stroke="#5b8763" stroke-width="18" stroke-linecap="round"/><rect x="59" y="80" width="202" height="201" rx="84" fill="url(#body)" stroke="#3c5e46" stroke-width="8"/>
+  <rect x="82" y="112" width="155" height="87" rx="40" fill="#143033" stroke="#587d73" stroke-width="6"/><ellipse cx="124" cy="151" rx="12" ry="17" fill="#d6ff9f"/><ellipse cx="195" cy="151" rx="12" ry="17" fill="#d6ff9f"/><path d="M143 177q19 12 34 0" fill="none" stroke="#c6f3ba" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="159" cy="218" r="14" fill="#d5f89b"/><path d="M120 271v21m81-21v21" stroke="#42684b" stroke-width="15" stroke-linecap="round"/>
+  <path d="M68 219q89 50 184 0l-24 67q-71 35-138 0Z" fill="url(#basket)" stroke="#754d34" stroke-width="7"/><path d="M81 229q80 39 159 0M91 258q69 30 138 0" fill="none" stroke="#f6de9c" stroke-opacity=".65" stroke-width="5"/>
+  <path d="M111 229v-63m35 61v-70m35 69v-72m35 75v-59" stroke="#4b9768" stroke-width="6" stroke-linecap="round"/><path d="M111 182q-25-40-35-14 3 23 35 26 21-35 33-16-8 22-33 25M179 179q-19-35-34-15 3 21 34 27 21-33 38-12-6 22-38 23" fill="#a4e880" stroke="#4d995e" stroke-width="5"/>
+  <circle cx="55" cy="99" r="5" fill="#d8ff8c"/><circle cx="274" cy="98" r="6" fill="#d8ff8c"/><path d="m273 53 5 12 12 5-12 5-5 12-5-12-12-5 12-5Z" fill="#ddff99"/>
+</svg>
