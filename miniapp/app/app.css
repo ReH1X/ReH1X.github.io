@@ -20,3 +20,14 @@
 .gate-sticker{width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 16px 24px #0008);animation:roxy-float 5s ease-in-out infinite}.reward-pop{position:fixed;z-index:35;left:50%;top:38%;width:min(230px,70vw);transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #dcff9d90;border-radius:25px;background:#17281df2;box-shadow:0 15px 60px #000b,0 0 35px #c7fa4c44;backdrop-filter:blur(16px);padding:15px;pointer-events:none;animation:reward-in 1.6s ease-out both}.reward-pop img{height:128px;width:128px;object-fit:contain}.reward-pop strong{color:var(--lime);font-size:13px;letter-spacing:.09em;text-align:center}@keyframes reward-in{0%{opacity:0;transform:translate(-50%,-40%) scale(.72)}15%,72%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-58%) scale(1.04)}}
 @media(max-width:375px){.farm-scene{min-height:215px}.farm-scene-top{left:12px;right:12px;top:12px}.farm-scene-tag,.farm-scene-level{font-size:8px;padding:6px}.farm-stat{padding:13px}.farm-storage-head img{width:84px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+/* Keep the stage artwork and its own title fully visible. */
+.farm-scene{min-height:0;max-height:none;aspect-ratio:auto;border-color:#566a4d;background:#142018}
+.farm-scene-art{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;filter:none}
+.farm-scene-caption{padding:14px 18px 17px;background:linear-gradient(135deg,#203725,#111d19);border-top:1px solid #6c956552}
+.farm-scene-top,.farm-scene-bottom{position:static;left:auto;right:auto;top:auto;bottom:auto}
+.farm-scene-top{display:flex;align-items:center;justify-content:space-between}
+.farm-scene-bottom{margin-top:12px;text-shadow:none}
+.farm-scene-bottom strong{max-width:none;font-size:clamp(21px,5vw,26px);margin-top:4px}
+.farm-scene-tag,.farm-scene-level{background:#142a1a;border-color:#a7d67445}
+@media(max-width:375px){.farm-scene{min-height:0}.farm-scene-caption{padding:12px}.farm-scene-top{left:auto;right:auto;top:auto}}
