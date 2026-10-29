@@ -112,9 +112,9 @@
     const lines=String(screen.text||'').split(/\n+/).map(value=>value.trim()).filter(Boolean);
     const report=lines.map((value,index)=>`<p class="farm-line ${index===0?'farm-line-title':''}">${esc(value)}</p>`).join('');
     return `<div class="farm-intro"><div class="eyebrow">BIOFARM · ТВОЙ СЕКТОР</div><h1 class="heading">Ферма <span>жива.</span></h1><p class="subheading">Расти, собирай урожай и открывай новые стадии.</p></div>
-      <div class="farm-scene" style="--stage-shift:${(stage-1)*17}deg"><img class="farm-scene-art" src="./art/farm-sector.svg" alt="Иллюстрация биофермы" loading="eager"><div class="farm-scene-shade"></div>
-        <div class="farm-scene-top"><span class="farm-scene-tag">✦ СТАДИЯ ${esc(visual.total_stage||stage)}</span><span class="farm-scene-level">УРОВЕНЬ ${esc(level)}</span></div>
-        <div class="farm-scene-bottom"><span>ТВОЙ БИОСЕКТОР</span><strong>${esc(stageName)}</strong></div></div>
+      <div class="farm-scene"><img class="farm-scene-art" src="./art/stages/stage_${stage}.jpg" alt="Ферма SKVERNA, стадия ${stage}" loading="eager" decoding="async">
+        <div class="farm-scene-caption"><div class="farm-scene-top"><span class="farm-scene-tag">✦ СТАДИЯ ${esc(visual.total_stage||stage)}</span><span class="farm-scene-level">УРОВЕНЬ ${esc(level)}</span></div>
+        <div class="farm-scene-bottom"><span>ТВОЙ БИОСЕКТОР</span><strong>${esc(stageName)}</strong></div></div></div>
       <div class="farm-dashboard"><div class="farm-stat"><small>БАЛАНС</small><strong>${Number(screen.sc||0).toLocaleString('ru-RU')}</strong><span>SC · монеты</span></div><div class="farm-stat"><small>ПЕРЕРОЖДЕНИЯ</small><strong>✦ ${esc(screen.stars||0)}</strong><span>постоянный буст</span></div></div>
       <div class="farm-storage"><div class="farm-storage-head"><div><small>🌿 ${esc(crop)}</small><strong>${ready?`Готово ${ready} из ${capacity}`:'Урожай растёт'}</strong></div><img src="./art/harvest.svg" alt="" loading="lazy"></div><div class="farm-storage-track"><i style="width:${fill}%"></i></div><p>${esc(next)}</p></div>
       ${isHome?`<div class="farm-actions">${buttons}</div><details class="farm-report"><summary>Подробности фермы <span>⌄</span></summary><div class="farm-report-body">${report}</div></details>`:
@@ -142,6 +142,9 @@
       nav.hidden=false;
       app.classList.remove('screen-enter');void app.offsetWidth;app.classList.add('screen-enter');
       app.innerHTML=(demo?'<span class="demo-badge">ДЕМО · без записи данных</span>':'')+(page==='farm'?farm(data):clan(data))+`<div style="text-align:center;padding:12px 0"><button class="refresh" data-action="refresh">↻ Обновить данные</button></div>`;
+      app.querySelector('.farm-scene-art')?.addEventListener('error',event=>{
+        event.currentTarget.src='./art/farm-sector.svg';
+      },{once:true});
       return;
     }
     const s=data?.snapshot;
