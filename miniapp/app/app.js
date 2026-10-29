@@ -20,13 +20,21 @@
   let requestSeq = 0;
   let busy = false;
   let toastTimer;
+  let retryTimer;
+  let retryAttempt = 0;
+  let offline = false;
 
   function esc(value) {return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function fmt(iso) {if(!iso)return '—';const date=new Date(iso);return Number.isNaN(date.getTime())?'—':new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).format(date);}
   function notify(message) {toastNode.textContent=message;toastNode.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastNode.classList.remove('show'),2800);}
   function buzz() {try {tg?.HapticFeedback?.impactOccurred('light');} catch (_) {}}
   function setConnection(label, offline=false) {connection.querySelector('span').textContent=label;connection.classList.toggle('offline',offline);}
-  function gate(title, text, offline=false) {nav.hidden=true;setConnection(offline?'НЕТ СВЯЗИ':'ТОЛЬКО ДЛЯ СВОИХ',offline);app.innerHTML=`<div class="gate"><img src="./art/biobot.svg" alt="" class="gate-sticker"><h1>${esc(title)}</h1><p>${esc(text)}</p></div>`;}
+  function gate(title, text, disconnected=false, retry=false) {nav.hidden=true;setConnection(disconnected?'НЕТ СВЯЗИ':'ТОЛЬКО ДЛЯ СВОИХ',disconnected);app.innerHTML=`<div class="gate"><img src="./art/biobot.svg" alt="" class="gate-sticker"><h1>${esc(title)}</h1><p>${esc(text)}</p>${retry?'<button class="primary" type="button" data-action="reconnect">↻ Повторить попытку</button>':''}</div>`;}
+  function scheduleRetry() {
+    if(document.visibilityState==='hidden')return;
+    const delay=Math.min(30000,3000*2**Math.min(retryAttempt++,4));
+    retryTimer=setTimeout(()=>{retryTimer=null;load();},delay);
+  }
   function celebrate(message, sticker='./art/harvest.svg') {
     document.querySelector('.reward-pop')?.remove();
     const pop=document.createElement('div');pop.className='reward-pop';pop.setAttribute('aria-hidden','true');
@@ -53,23 +61,39 @@
     return {week_key:'2026-10-26',ends_on:'2026-11-02',total:68,personal:11,breakdown:{quests:3,contracts:4,harvests:4},board:[['Игрок 1',26],['Игрок 2',17]],claimed:[],claimable:!previousWeek,stages:[{stage:1,clan:40,personal:8,base_sc:150},{stage:2,clan:120,personal:20,base_sc:450},{stage:3,clan:250,personal:35,base_sc:1000}]};
   }
   async function api(path, body) {
-    const response=await fetch(new URL(path,base),{method:body?'POST':'GET',headers:{Authorization:`tma ${tg.initData}`,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});
-    if(!response.ok)throw new Error((await response.text()).slice(0,160) || `Ошибка ${response.status}`);
+    const controller=body?null:new AbortController();
+    const timeout=controller?setTimeout(()=>controller.abort(),12000):null;
+    let response;
+    try {
+      response=await fetch(new URL(path,base),{method:body?'POST':'GET',headers:{Authorization:`tma ${tg.initData}`,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store',signal:controller?.signal});
+    } finally {if(timeout)clearTimeout(timeout);}
+    if(!response.ok){const error=new Error((await response.text()).slice(0,160) || `Ошибка ${response.status}`);error.status=response.status;throw error;}
     return response.json();
   }
   async function load(next=page) {
     page=next;
     const seq=++requestSeq;
+    if(retryTimer){clearTimeout(retryTimer);retryTimer=null;}
     nav.querySelectorAll('[data-tab]').forEach(button=>{button.classList.toggle('active',button.dataset.tab===page);button.setAttribute('aria-current',button.dataset.tab===page?'page':'false');});
     if(demo){data=page==='farm'?mockFarm(farmView):page==='clan'?mockWeek():mock(page);setConnection('ДЕМО');render();return;}
+    if(offline){setConnection('ПОДКЛЮЧАЕМСЯ',true);const button=app.querySelector('[data-action="reconnect"]');if(button){button.disabled=true;button.textContent='Подключаюсь…';}}
     try {
       const path=next==='farm'?`api/farm?view=${encodeURIComponent(farmView)}`:next==='clan'?`api/weekly?previous=${previousWeek}`:`api/state?page=${next}`;
       const loaded=await api(path);
       if(seq!==requestSeq)return;
       data=loaded;
+      offline=false;retryAttempt=0;
       setConnection('В СЕТИ');
       render();
-    } catch(error){if(seq===requestSeq)gate('Нет соединения',error.message,true);}
+    } catch(error){
+      if(seq!==requestSeq)return;
+      if(error.status===401){offline=false;gate('Сессия истекла','Закрой Mini App и снова открой его из меню бота.');return;}
+      if(error.status===403){offline=false;gate('Доступ ограничен',error.message);return;}
+      if(error.status && error.status<500 && error.status!==429){offline=false;gate('Не получилось загрузить данные',error.message);return;}
+      offline=true;
+      gate('Связь с ботом прервалась','Проверю подключение автоматически. Можно попробовать ещё раз прямо сейчас.',true,true);
+      scheduleRetry();
+    }
   }
   function title(eyebrow,main,accent,subtitle) {return `<div class="eyebrow">${eyebrow}</div><h1 class="heading">${main} <span>${accent}</span></h1><p class="subheading">${subtitle}</p>`;}
   function section(name,side='') {return `<div class="section-title"><h2>${name}</h2><small>${side}</small></div>`;}
@@ -209,8 +233,10 @@
     const weekToggle=event.target.closest('[data-weekly-toggle]');
     if(weekToggle){previousWeek=!previousWeek;load('clan');return;}
     const button=event.target.closest('[data-action]');
+    if(button?.dataset.action==='reconnect'){retryAttempt=0;load();return;}
     if(button)action(button);
   });
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&offline)load();});
   if(!demo&&!tg?.initData){gate('SKVERNA OS','Открой Mini App из меню нашего Telegram-бота, чтобы войти в свой профиль.');return;}
   try{tg?.ready();tg?.expand();tg?.setHeaderColor('#080b0a');tg?.setBackgroundColor('#080b0a');}catch(_){}
   load();
